@@ -109,7 +109,7 @@ before_script:
   
 script:
   - ERR_CODE=0
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then ci/build-and-test-${BUILD_TYPE}.sh || ERR_CODE=$?; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then sudo ci/build-and-test-${BUILD_TYPE}.sh || ERR_CODE=$?; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then docker exec -i $DOCKER_IMAGE bash -c "cd PcapPlusPlus && ci/build-and-test-${BUILD_TYPE}.sh" || ERR_CODE=$?; fi
   - (exit $ERR_CODE)
 
