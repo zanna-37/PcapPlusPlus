@@ -7,6 +7,11 @@ set -e
 #    configure with dpdk (Linux)    --> ./configure-standard.sh linux dpdk <DPDK_HOME>
 #    configure with pf_ring (Linux) --> ./configure-standard.sh linux pf_ring <PF_RING_HOME>
 
+if [ "$#" -lt 1 ]; then
+   echo "No parameters provided";
+   exit 1;
+fi
+
 PLATFORM_OS=$1
 COMPILE_WITH_DPDK=0
 COMPILE_WITH_PF_RING=0
