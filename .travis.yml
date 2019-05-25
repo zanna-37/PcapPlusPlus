@@ -31,19 +31,23 @@ matrix:
         - BUILD_TYPE=standard
     - os: linux
       env:
+        - DOCKER_IMAGE=fedora29
+        - BUILD_TYPE=cmake
+    - os: linux
+      env:
         - DOCKER_IMAGE=ubuntu1604-dpdk1611
         - BUILD_TYPE=standard
-        - EXTRA_PARAMS="dpdk /dpdk-stable-16.11.6"
+        - EXTRA_PARAMS="dpdk /dpdk-stable-16.11.9"
     - os: linux
       env:
         - DOCKER_IMAGE=ubuntu1604-dpdk1711
         - BUILD_TYPE=standard
-        - EXTRA_PARAMS="dpdk /dpdk-stable-17.11.2"
+        - EXTRA_PARAMS="dpdk /dpdk-stable-17.11.6"
     - os: linux
       env:
         - DOCKER_IMAGE=ubuntu1604-dpdk1811
         - BUILD_TYPE=standard
-        - EXTRA_PARAMS="dpdk /dpdk-18.11"
+        - EXTRA_PARAMS="dpdk /dpdk-stable-18.11.1"
     - os: linux
       env:
         - DOCKER_IMAGE=ubuntu1604-dpdk1902
