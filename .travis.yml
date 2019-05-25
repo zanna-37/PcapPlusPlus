@@ -19,6 +19,10 @@ matrix:
         - BUILD_TYPE=standard
     - os: linux
       env:
+        - DOCKER_IMAGE=ubuntu1804
+        - BUILD_TYPE=cmake
+    - os: linux
+      env:
         - DOCKER_IMAGE=centos7
         - BUILD_TYPE=standard
     - os: linux
