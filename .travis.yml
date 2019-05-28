@@ -79,6 +79,10 @@ matrix:
       env: BUILD_TYPE=standard
     - os: osx
       compiler: clang
+      osx_image: xcode7.3
+      env: BUILD_TYPE=cmake
+    - os: osx
+      compiler: clang
       osx_image: xcode8
       env: BUILD_TYPE=standard
     - os: osx
@@ -113,6 +117,10 @@ matrix:
       compiler: clang
       osx_image: xcode10.1
       env: BUILD_TYPE=standard
+    - os: osx
+      compiler: clang
+      osx_image: xcode10.1
+      env: BUILD_TYPE=cmake
 
 
 before_script:

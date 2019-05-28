@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.0)
 
+include(DetectOS)
+
 find_package (Threads)
 
 option(PCAPPP_HAS_PCAP_IMMEDIATE_MODE "Enable Pcap Has Immediate Mode (supported on libpcap>=1.5)")
@@ -41,6 +43,14 @@ target_include_directories(PcapPP
 	PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/header
 	PUBLIC ${PCAP_INCLUDE_DIR}
 )
+
+if(TARGET_PLATFORM_MACOS)
+	find_package(MACOS)
+	target_link_libraries(PcapPP PUBLIC
+		${MACOS_CORE_FOUNDATION_LIBRARY}
+		${MACOS_SYSTEM_CONFIGURATION_LIBRARY}
+	)
+endif()
 
 if(PCAPPP_USE_PF_RING)
 	target_link_libraries(PcapPP
