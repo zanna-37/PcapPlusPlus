@@ -2,7 +2,22 @@ cmake_minimum_required(VERSION 3.0)
 
 include(DetectOS)
 
-find_package (Threads)
+if (TARGET_PLATFORM_WINDOWS)
+	set(THREADS_USE_PTHREADS_WIN32 true)
+	find_package (Threads REQUIRED)
+	include_directories(${THREADS_PTHREADS_INCLUDE_DIR})
+
+	include( CheckStructHasMember )
+	check_struct_has_member("struct timespec" "tv_sec" "time.h" HAVE_STRUCT_TIMESPEC)
+	# HAVE_STRUCT_TIMESPEC must be defined for windows pthreads on newer MSVC
+	if (HAVE_STRUCT_TIMESPEC)
+		add_definitions(-DHAVE_STRUCT_TIMESPEC=1)
+	endif()
+else()
+	find_package (Threads REQUIRED)
+endif()
+
+find_package (PCAP REQUIRED)
 
 option(PCAPPP_HAS_PCAP_IMMEDIATE_MODE "Enable Pcap Has Immediate Mode (supported on libpcap>=1.5)")
 
@@ -50,6 +65,13 @@ if(TARGET_PLATFORM_MACOS)
 		${MACOS_CORE_FOUNDATION_LIBRARY}
 		${MACOS_SYSTEM_CONFIGURATION_LIBRARY}
 	)
+elseif(TARGET_PLATFORM_WINDOWS)
+	target_compile_definitions(PcapPP
+		PUBLIC -DHAVE_REMOTE
+	)
+	target_compile_definitions(PcapPP
+		PUBLIC -DWPCAP
+	)
 endif()
 
 if(PCAPPP_USE_PF_RING)
@@ -69,8 +91,11 @@ target_link_libraries(PcapPP PUBLIC
 	PacketPP
 	EndianPortable
 	light_pcapng
-	${PCAP_LIBRARIES}
+	${PCAP_LIBRARY}
+	${PACKET_LIBRARY}
 	Threads::Threads
+	# ${PCAPPP_OS_LIBS}
+	# ${CMAKE_THREAD_LIBS_INIT}
 )
 
 if(PCAPPP_HAS_PCAP_IMMEDIATE_MODE)
