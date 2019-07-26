@@ -1,76 +1,89 @@
-#
 # - Try to find libpcap include dirs and libraries
 #
 # Usage of this module as follows:
 #
 #     find_package(PCAP)
 #
+# Variables used by this module, they can change the default behaviour and need
+# to be set before calling find_package:
+#
+#  PCAP_ROOT_DIR             Set this variable to the root installation of
+#                            libpcap if the module has problems finding the
+#                            proper installation path.
+#
 # Variables defined by this module:
 #
 #  PCAP_FOUND                System has libpcap, include and library dirs found
 #  PCAP_INCLUDE_DIR          The libpcap include directories.
-#  PCAP_LIBRARIES            The libpcap library
+#  PCAP_LIBRARY              The libpcap library (possibly includes a thread
+#                            library e.g. required by pf_ring's libpcap)
+#  PACKET_LIBRARY            On Windows there is additional library called Packet
+#  HAVE_PCAP_IMMEDIATE_MODE  If the version of libpcap found supports immediate mode
 
-
-set(ERROR_MESSAGE
-    "
-    ERROR!  Libpcap library/headers (libpcap.a (or .so)/pcap.h)
-    not found, go get it from http://www.tcpdump.org
-    or use the --with-pcap-* options, if you have it installed
-    in unusual place.  Also check if your libpcap depends on another
-    shared library that may be installed in an unusual place"
+find_path(PCAP_ROOT_DIR
+    NAMES include/pcap.h
 )
 
-# Call find_path twice.  First search custom path, then search standard paths.
-if (PCAP_INCLUDE_DIR_HINT)
-    find_path(PCAP_INCLUDE_DIR pcap.h
-        HINTS ${PCAP_INCLUDE_DIR_HINT}
-        NO_DEFAULT_PATH
-    )
-endif()
-find_path(PCAP_INCLUDE_DIR pcap.h)
+find_path(PCAP_INCLUDE_DIR
+    NAMES pcap.h
+    HINTS ${PCAP_ROOT_DIR}/include
+)
 
-# Ditto for the library.
-if (PCAP_LIBRARIES_DIR_HINT)
-    find_library(PCAP_LIBRARIES
-        pcap
-        HINTS ${PCAP_LIBRARIES_DIR_HINT}
-        NO_DEFAULT_PATH
-    )
-endif()
-find_library(PCAP_LIBRARIES pcap)
+set (HINT_DIR ${PCAP_ROOT_DIR}/lib)
+
+# On x64 windows, we should look also for the .lib at /lib/x64/
+# as this is the default path for the WinPcap developer's pack
+if (${CMAKE_SIZEOF_VOID_P} EQUAL 8 AND WIN32)
+    set (HINT_DIR ${PCAP_ROOT_DIR}/lib/x64/ ${HINT_DIR})
+endif ()
+
+find_library(PCAP_LIBRARY
+    NAMES pcap wpcap
+    HINTS ${HINT_DIR}
+)
+
+find_library(PACKET_LIBRARY
+    NAMES Packet
+    HINTS ${HINT_DIR}
+)
 
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(PCAP
-    REQUIRED_VARS PCAP_LIBRARIES PCAP_INCLUDE_DIR
-    FAIL_MESSAGE ${ERROR_MESSAGE}
+find_package_handle_standard_args(PCAP DEFAULT_MSG
+    PCAP_LIBRARY
+    PCAP_INCLUDE_DIR
 )
 
-# Check if linking against libpcap also requires linking against a thread library.
-# (lifted from Bro's FindPCAP.cmake)
-include(CheckCSourceCompiles)
-set(CMAKE_REQUIRED_LIBRARIES ${PCAP_LIBRARIES})
-check_c_source_compiles("int main() { return 0; }" PCAP_LINKS_SOLO)
+include(CheckCXXSourceCompiles)
+set(CMAKE_REQUIRED_LIBRARIES ${PCAP_LIBRARY})
+check_cxx_source_compiles("int main() { return 0; }" PCAP_LINKS_SOLO)
 set(CMAKE_REQUIRED_LIBRARIES)
 
+# check if linking against libpcap also needs to link against a thread library
 if (NOT PCAP_LINKS_SOLO)
     find_package(Threads)
     if (THREADS_FOUND)
-        set(CMAKE_REQUIRED_LIBRARIES ${PCAP_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
-        check_c_source_compiles("int main() { return 0; }" PCAP_NEEDS_THREADS)
+        set(CMAKE_REQUIRED_LIBRARIES ${PCAP_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
+        check_cxx_source_compiles("int main() { return 0; }" PCAP_NEEDS_THREADS)
         set(CMAKE_REQUIRED_LIBRARIES)
-    endif ()
+    endif (THREADS_FOUND)
     if (THREADS_FOUND AND PCAP_NEEDS_THREADS)
-        set(_tmp ${PCAP_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+        set(_tmp ${PCAP_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
         list(REMOVE_DUPLICATES _tmp)
-        set(PCAP_LIBRARIES ${_tmp}
+        set(PCAP_LIBRARY ${_tmp}
             CACHE STRING "Libraries needed to link against libpcap" FORCE)
-    else ()
-        message(SEND_ERROR "Couldn't determine how to link against libpcap")
-    endif ()
-endif ()
+    else (THREADS_FOUND AND PCAP_NEEDS_THREADS)
+        message(FATAL_ERROR "Couldn't determine how to link against libpcap")
+    endif (THREADS_FOUND AND PCAP_NEEDS_THREADS)
+endif (NOT PCAP_LINKS_SOLO)
+
+include(CheckFunctionExists)
+set(CMAKE_REQUIRED_LIBRARIES ${PCAP_LIBRARY})
+check_function_exists(pcap_set_immediate_mode HAVE_PCAP_IMMEDIATE_MODE)
+set(CMAKE_REQUIRED_LIBRARIES)
 
 mark_as_advanced(
+    PCAP_ROOT_DIR
     PCAP_INCLUDE_DIR
-    PCAP_LIBRARIES
+    PCAP_LIBRARY
+    PACKET_LIBRARY
 )
