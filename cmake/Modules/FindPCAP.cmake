@@ -42,10 +42,14 @@ find_library(PCAP_LIBRARY
     HINTS ${HINT_DIR}
 )
 
-find_library(PACKET_LIBRARY
-    NAMES Packet
-    HINTS ${HINT_DIR}
-)
+if (WIN32)
+    find_library(PACKET_LIBRARY
+        NAMES Packet
+        HINTS ${HINT_DIR}
+    )
+else()
+    set(PACKET_LIBRARY)
+endif()
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(PCAP DEFAULT_MSG
