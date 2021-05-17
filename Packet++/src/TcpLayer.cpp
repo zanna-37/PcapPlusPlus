@@ -16,6 +16,8 @@
 #include <string.h>
 #include <sstream>
 
+#include "../../../../src/bgp/packets/BGPLayer.h"
+
 namespace pcpp
 {
 
@@ -367,7 +369,7 @@ void TcpLayer::parseNextLayer()
 			m_NextLayer = new PayloadLayer(payload, payloadLen, this, m_Packet);
 	}
 	else if (BgpLayer::isBgpPort(portSrc, portDst))
-		m_NextLayer = BgpLayer::parseBgpLayer(payload, payloadLen, this, m_Packet);
+		m_NextLayer = BGPLayer::parseBGPLayerOrNull(payload, payloadLen, this, m_Packet);
 	else if (SSHLayer::isSSHPort(portSrc, portDst))
 		m_NextLayer = SSHLayer::createSSHMessage(payload, payloadLen, this, m_Packet);
 	else if (DnsLayer::isDataValid(payload, payloadLen, true) && (DnsLayer::isDnsPort(portDst) || DnsLayer::isDnsPort(portSrc)))
